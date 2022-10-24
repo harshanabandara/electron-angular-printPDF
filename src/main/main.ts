@@ -39,7 +39,55 @@ function createWindow() {
     win = null;
   });
 }
+function printCurrentWindow(){
+  const options = {
+    silent: false,
+    printBackground: true,
+    color: false,
+    margin: {
+        marginType: 'printableArea'
+    },
+    landscape: false,
+    pagesPerSheet: 1,
+    collate: false,
+    copies: 1,
+    header: 'Header of the Page',
+    footer: 'Footer of the Page'
+  }
+  win?.webContents.print(options,(success,errType)=>{
+      if(!success) console.log(errType)
+    })
+}
 
+function printCurrentWindowToPDF(){
+  let previewWindow = new BrowserWindow({
+    width: 1000,
+    height: 700,
+    modal: true,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+      preload:path.join(app.getAppPath(),'dist/preload','preload.js')
+    },
+  })
+  // previewWindow.previewFile(path,displayname)
+  const pdfPath = path.join(os.homedir(),'Desktop','temp.pdf')
+  win?.webContents.printToPDF({printBackground:true}).then(data=>{
+    console.log(data);
+    previewWindow.loadURL('data:application/pdf;base64,'+data.toString('base64'))
+    previewWindow.once("ready-to-show", () => {
+    previewWindow.show();
+  });
+      writeFile(pdfPath,data,(error)=>{
+        if (error) throw error
+        console.log("Successfull");        
+      })
+    }).catch(error=>{
+      console.log('Failed ',error)
+    })
+}
 function createChildWindow(){
   const option1 = {
     landscape:false,
@@ -103,7 +151,8 @@ ipcMain.on('dev-tools', () => {
   }
 });
 ipcMain.on("create-child-window", (event, arg) => {
-  createChildWindow();
+  printCurrentWindowToPDF()
+  // createChildWindow();
   // win?.webContents.on('did-finish-load',()=>{
     // const pdfPath = path.join(os.homedir(),'Desktop','temp.pdf')
     // console.log(pdfPath)
