@@ -8,13 +8,15 @@ import { AppComponent } from './app.component';
 import { Component1Component } from './components/component1/component1.component';
 import { Component2Component } from './components/component2/component2.component';
 import { NavlistComponent } from './components/navlist/navlist.component';
+import { PrintButtonComponent } from './components/print-button/print-button.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     Component1Component,
     Component2Component,
-    NavlistComponent
+    NavlistComponent,
+    PrintButtonComponent
   ],
   imports: [
     BrowserModule,

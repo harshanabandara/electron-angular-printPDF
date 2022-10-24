@@ -13,8 +13,9 @@ export class Component1Component implements OnInit {
   release = '-';
 
   constructor(private ipcService: IpcService, private ngZone: NgZone) { }
-
+  
   ngOnInit() {
+  
     this.ipcService.getSystemInfoAsync()
       .subscribe(systemInfo => {
         this.ngZone.run(() => {

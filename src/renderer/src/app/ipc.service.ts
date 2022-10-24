@@ -23,4 +23,9 @@ export class IpcService {
       window.api.electronIpcSend('request-systeminfo');
     });
   }
+
+  openNewWindow(){
+    console.log("called")
+    window.api.electronIpcSend('create-child-window')
+  }
 }

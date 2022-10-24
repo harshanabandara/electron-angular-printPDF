@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import * as path from 'path';
 import { DtoSystemInfo } from '../ipc-dtos/dtosysteminfo';
 import * as os from 'os';
+import {  writeFile } from 'fs';
 
 let win: BrowserWindow | null = null;
 
@@ -23,7 +24,7 @@ function createWindow() {
       // protect against prototype pollution
       contextIsolation: true,
       // turn off remote
-      enableRemoteModule: false,
+      enableRemoteModule: true,
       // Preload script
       preload: path.join(app.getAppPath(), 'dist/preload', 'preload.js')
     }
@@ -39,11 +40,83 @@ function createWindow() {
   });
 }
 
+function createChildWindow(){
+  const option1 = {
+    landscape:false,
+    displayHeaderFooter:false,
+    printBackground:true,
+    scale:1,
+    pageSize:'letter',
+    margins:{top:1,bottom:1,left:1,right:1},
+    pageRanges:'',
+    // headerTemplate:,
+    // footerTemplate:,
+    preferCSSPageSize:false
+  }
+  let childWindow = new BrowserWindow({
+    width: 1000,
+    height: 700,
+    modal: true,
+    show: false,
+  
+    // Make sure to add webPreferences with below configuration
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+      preload:path.join(app.getAppPath(),'dist/preload','preload.js')
+    },
+  });
+  
+  // Child window loads settings.html file
+  childWindow.loadURL("https://feels.pdn.ac.lk");
+  
+  childWindow.once("ready-to-show", () => {
+    childWindow.show();
+  });
+  childWindow.webContents.on('did-finish-load',()=>{
+
+    const pdfPath = path.join(os.homedir(),'Desktop','temp.pdf')
+    console.log(pdfPath)
+    childWindow.webContents.print({},(success,errType)=>{
+      if(!success) console.log(errType)
+    })
+    childWindow.webContents.printToPDF({printBackground:true}).then(data=>{
+      writeFile(pdfPath,data,(error)=>{
+        if (error) throw error
+        console.log("Successfull");        
+      })
+    }).catch(error=>{
+      console.log('Failed ',error)
+    })
+  })
+  childWindow.on('closed', () => {
+    win = null;
+  });
+
+}
+
+
 ipcMain.on('dev-tools', () => {
   if (win) {
     win.webContents.toggleDevTools();
   }
 });
+ipcMain.on("create-child-window", (event, arg) => {
+  createChildWindow();
+  // win?.webContents.on('did-finish-load',()=>{
+    // const pdfPath = path.join(os.homedir(),'Desktop','temp.pdf')
+    // console.log(pdfPath)
+    // win?.webContents.printToPDF({}).then(data=>{
+    //   writeFile(pdfPath,data,(error)=>{
+    //     if (error) throw error
+    //     console.log("Successfull");        
+    //   })
+    // }).catch(error=>{
+    //   console.log('Failed ',error)
+    // })
+    // })
+  })
 
 ipcMain.on('request-systeminfo', () => {
   const systemInfo = new DtoSystemInfo();
