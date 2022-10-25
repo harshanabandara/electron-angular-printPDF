@@ -3,7 +3,7 @@ import * as path from 'path';
 import { DtoSystemInfo } from '../ipc-dtos/dtosysteminfo';
 import * as os from 'os';
 import {  writeFile } from 'fs';
-
+import {format} from 'url'
 let win: BrowserWindow | null = null;
 
 app.on('ready', createWindow);
@@ -78,15 +78,42 @@ function printCurrentWindowToPDF(){
     console.log(data);
     previewWindow.loadURL('data:application/pdf;base64,'+data.toString('base64'))
     previewWindow.once("ready-to-show", () => {
-    previewWindow.show();
-  });
-      writeFile(pdfPath,data,(error)=>{
-        if (error) throw error
-        console.log("Successfull");        
-      })
-    }).catch(error=>{
-      console.log('Failed ',error)
+      previewWindow.show();
+    });
+    writeFile(pdfPath,data,(error)=>{
+      if (error) throw error
+      console.log("Successfull");        
     })
+  }).catch(error=>{
+    console.log('Failed ',error)
+  })
+}
+
+function createPreviewWindowHTML(){
+  // According to the documentation, this work only on macOS
+  let previewWindow = new BrowserWindow({
+    width: 1000,
+    height: 700,
+    modal: true,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+      preload:path.join(app.getAppPath(),'dist/preload','preload.js')
+    },
+  })
+  console.log(__dirname);
+  
+  previewWindow.loadURL(format({
+    pathname: path.join(__dirname, 'Google search.html'),
+    protocol: 'file:',
+    slashes: true
+  }))
+  // previewWindow.loadFile('/mnt/old/FutureLabs/angular-electron-boilerplate/Google Search.html')
+  previewWindow.once('ready-to-show',()=>{
+    previewWindow.show()
+  })
 }
 function createChildWindow(){
   const option1 = {
@@ -152,6 +179,7 @@ ipcMain.on('dev-tools', () => {
 });
 ipcMain.on("create-child-window", (event, arg) => {
   printCurrentWindowToPDF()
+  // createPreviewWindowHTML()
   // createChildWindow();
   // win?.webContents.on('did-finish-load',()=>{
     // const pdfPath = path.join(os.homedir(),'Desktop','temp.pdf')
